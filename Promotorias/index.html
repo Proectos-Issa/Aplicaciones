@@ -137,11 +137,80 @@ main {
   padding:6px 12px;
   font-weight:700;
 }
+
+/* Distribución principal: 3 filas de 5 campos */
 .fields {
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:17px 18px;
+  display: grid;
+  grid-template-columns:
+    minmax(95px, 0.85fr)
+    minmax(125px, 1.05fr)
+    minmax(180px, 1.65fr)
+    minmax(145px, 1.15fr)
+    minmax(145px, 1.15fr);
+  gap: 13px 12px;
+  align-items: end;
 }
+
+/* Evitar que un campo sobrepase su columna */
+.fields > div {
+  min-width: 0;
+}
+
+/* Todos los campos ocupan una sola columna */
+.fields > .full {
+  grid-column: auto;
+}
+
+/* Ajustar el contenido al espacio disponible */
+.fields input,
+.fields select {
+  width: 100%;
+  min-width: 0;
+  min-height: 39px;
+  padding: 8px 10px;
+  font-size: 13px;
+  text-overflow: ellipsis;
+}
+
+/* Etiquetas compactas */
+.fields label {
+  font-size: 11px;
+  line-height: 1.25;
+  margin-bottom: 5px;
+}
+
+/* Fechas y cantidades */
+.fields input[type="date"] {
+  padding-right: 5px;
+}
+
+.fields input[type="number"] {
+  text-align: right;
+}
+
+/* Valores automáticos */
+.fields input[readonly] {
+  background: #eef3f7;
+  font-weight: 600;
+}
+
+/* Asegurado: más espacio cuando sea necesario */
+#nombre {
+  width: 100%;
+}
+
+/* Selectores activos */
+.fields select:not(:disabled) {
+  cursor: pointer;
+}
+
+/* Selectores que esperan una selección previa */
+.fields select:disabled {
+  background: #f1f4f8;
+  color: #8090a1;
+  cursor: not-allowed;
+}
+
 label {
   display:block;
   font-weight:650;
@@ -291,17 +360,51 @@ td {font-size:12px}
 }
 .status.error {background:#a72727}
 
-@media(max-width:850px) {
-  .fields {grid-template-columns:repeat(2,1fr)}
-  .modalgrid {grid-template-columns:repeat(2,1fr)}
-  .summary {grid-template-columns:1fr 1fr}
+
+/* Pantallas medianas */
+@media (max-width: 1050px) {
+  .fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 13px;
+  }
 }
-@media(max-width:540px) {
-  .fields,.modalgrid,.summary {grid-template-columns:1fr}
-  .full {grid-column:span 1}
-  .top h1 {font-size:21px}
-  .panel-body {padding:14px}
+
+/* Tabletas */
+@media (max-width: 750px) {
+  .fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modalgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
+
+/* Teléfonos */
+@media (max-width: 540px) {
+  .fields,
+  .modalgrid,
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
+  .fields > .full {
+    grid-column: auto;
+  }
+
+  .top h1 {
+    font-size: 21px;
+  }
+
+  .panel-body {
+    padding: 14px;
+  }
+}
+
 </style>
 </head>
 
@@ -745,18 +848,34 @@ function uniq(arr) {
     .sort((a, b) => a.localeCompare(b, 'es'));
 }
 
-function options(id, arr, placeholder) {
-  const current = val(id);
 
-  $(id).innerHTML =
-    '<option value="">' + escapeHtml(placeholder) + '</option>' +
-    arr.map(x =>
-      `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`
-    ).join('');
+function options(id, arr, placeholder, disabled = false) {
+  const select = document.getElementById(id);
+  const current = select.value;
 
-  if (arr.includes(current)) {
-    $(id).value = current;
-  }
+  const values = [...new Set(
+    (arr || [])
+      .map(x => String(x ?? '').trim())
+      .filter(Boolean)
+  )];
+
+  select.replaceChildren();
+
+  const first = new Option(placeholder, '');
+  select.add(first);
+
+  values.forEach(value => {
+    select.add(new Option(value, value));
+  });
+
+  // Conservar la selección solo si sigue existiendo
+  select.value = values.includes(current) ? current : '';
+
+  // Evitar abrir listas sin opciones
+  select.disabled = disabled || values.length === 0;
+  select.title = select.disabled
+    ? placeholder
+    : 'Seleccione una opción';
 }
 
 // Cargar información.
@@ -774,11 +893,13 @@ async function load() {
       'Seleccione compañía'
     );
 
-    options(
-      'agente',
-      uniq(data.agentes.map(x => x.agente)),
-      'Seleccione agente'
-    );
+ options(
+  'agente',
+  uniq(data.agentes.map(x => x.agente)),
+  'Seleccione agente'
+);
+
+$('agente').value = '';
 
     updateProductos();
     updateAgente();
@@ -802,38 +923,56 @@ async function load() {
   }
 }
 
-// Filtrar productos por compañía.
+
+// Mostrar productos según la compañía elegida.
 function updateProductos() {
-  const items = data.comisiones.filter(
-    x => x.compania === val('compania')
+  const compania = val('compania');
+
+  const productos = uniq(
+    data.comisiones
+      .filter(x => x.compania === compania)
+      .map(x => x.producto)
   );
 
   options(
     'producto',
-    uniq(items.map(x => x.producto)),
-    'Seleccione producto'
+    productos,
+    compania
+      ? 'Seleccione producto'
+      : 'Primero elija compañía',
+    !compania
   );
 
   updateTipos();
 }
 
-// Filtrar tipos según compañía y producto.
+// Mostrar tipos según compañía y producto.
 function updateTipos() {
-  const items = data.comisiones.filter(
-    x =>
-      x.compania === val('compania') &&
-      x.producto === val('producto')
+  const compania = val('compania');
+  const producto = val('producto');
+
+  const tipos = uniq(
+    data.comisiones
+      .filter(x =>
+        x.compania === compania &&
+        x.producto === producto
+      )
+      .map(x => x.tipo)
   );
 
   options(
     'tipo',
-    uniq(items.map(x => x.tipo)),
-    'Seleccione tipo'
+    tipos,
+    producto
+      ? 'Seleccione tipo'
+      : 'Primero elija producto',
+    !compania || !producto
   );
 
   updatePorcentaje();
 }
 
+ 
 function selectedCommission() {
   return data.comisiones.find(
     x =>
@@ -921,6 +1060,9 @@ function resetForm() {
 
   $('savedText').textContent =
     'Guarde el registro para descargar el Word.';
+
+  $('compania').value = '';
+  $('agente').value = '';
 
   updateProductos();
   updateAgente();
