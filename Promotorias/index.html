@@ -1,1 +1,1141 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>ISSA | Reconocimientos de Promotoría</title>
+
+<style>
+:root {
+  --navy:#12385d;
+  --navy2:#092946;
+  --orange:#f28b28;
+  --bg:#f2f5f9;
+  --line:#dce3ec;
+  --text:#263549;
+  --muted:#63758a;
+}
+* {box-sizing:border-box}
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font:14px 'Segoe UI',Arial,sans-serif;
+}
+button,input,select {font:inherit}
+header {
+  background:var(--navy2);
+  color:white;
+  padding:17px 4%;
+  display:flex;
+  gap:20px;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 2px 12px #102c471b;
+}
+.brand {
+  font-size:21px;
+  font-weight:800;
+  letter-spacing:.5px;
+}
+.brand small {
+  display:block;
+  font-size:11px;
+  letter-spacing:1.1px;
+  color:#b9cbe1;
+  font-weight:500;
+}
+.brand b {color:var(--orange)}
+main {
+  max-width:1220px;
+  margin:25px auto;
+  padding:0 18px;
+}
+.top {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:18px;
+}
+.top h1 {
+  font-size:24px;
+  margin:0;
+  color:var(--navy);
+}
+.top p {
+  margin:5px 0 0;
+  color:var(--muted);
+}
+.actions {
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+}
+.btn {
+  border:1px solid transparent;
+  border-radius:9px;
+  padding:11px 17px;
+  font-weight:650;
+  cursor:pointer;
+  background:var(--navy);
+  color:white;
+}
+.btn:hover {filter:brightness(1.08)}
+.btn:disabled {opacity:.5;cursor:wait}
+.btn.secondary {
+  background:white;
+  color:var(--navy);
+  border-color:#cad6e3;
+}
+.btn.orange {
+  background:var(--orange);
+  color:#1c3044;
+}
+.btn.danger {
+  background:#fff0f0;
+  color:#a72323;
+  border:1px solid #f0cccc;
+}
+.btn.small {
+  padding:7px 11px;
+  font-size:12px;
+}
+.panel {
+  border:1px solid var(--line);
+  background:white;
+  border-radius:13px;
+  box-shadow:0 3px 16px #1d32430b;
+  overflow:hidden;
+  margin-bottom:18px;
+}
+.panel-title {
+  background:linear-gradient(90deg,#ebf2f9,#fff);
+  padding:15px 21px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+.panel-title h2 {
+  font-size:16px;
+  margin:0;
+  color:var(--navy);
+}
+.panel-body {padding:21px}
+.badge {
+  border-radius:20px;
+  background:#e5eef7;
+  color:var(--navy);
+  padding:6px 12px;
+  font-weight:700;
+}
+.fields {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:17px 18px;
+}
+label {
+  display:block;
+  font-weight:650;
+  font-size:12px;
+  color:#4b5e72;
+  margin-bottom:6px;
+}
+label .req {color:#d65c1d}
+input,select {
+  width:100%;
+  padding:11px;
+  border:1px solid #cdd8e3;
+  border-radius:8px;
+  background:white;
+  outline:none;
+  min-height:42px;
+  color:var(--text);
+}
+input:focus,select:focus {
+  border-color:#537dba;
+  box-shadow:0 0 0 3px #3475c217;
+}
+input[readonly] {
+  background:#eef3f7;
+  color:#415871;
+  font-weight:650;
+}
+.full {grid-column:span 2}
+.summary {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+.metric {
+  background:#f4f7fa;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:15px;
+}
+.metric span {
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-bottom:6px;
+}
+.metric strong {
+  color:var(--navy);
+  font-size:20px;
+}
+.tablewrap {overflow:auto}
+table {
+  width:100%;
+  border-collapse:collapse;
+  min-width:820px;
+}
+th {
+  background:#edf2f7;
+  color:var(--navy);
+  font-size:12px;
+  text-align:left;
+}
+th,td {
+  border:1px solid #dae2ea;
+  padding:11px 9px;
+  vertical-align:top;
+}
+td {font-size:12px}
+.mini {
+  font-size:12px;
+  color:var(--muted);
+}
+.footer-actions {
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:15px;
+}
+.overlay {
+  position:fixed;
+  inset:0;
+  background:#0d243a9a;
+  z-index:10;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:15px;
+}
+.overlay.show {display:flex}
+.modal {
+  width:min(1060px,100%);
+  background:white;
+  max-height:94vh;
+  overflow:auto;
+  border-radius:13px;
+  box-shadow:0 18px 60px #0004;
+}
+.modalhead {
+  padding:18px 23px;
+  background:var(--navy);
+  color:white;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.modalhead h2 {margin:0;font-size:19px}
+.close {
+  background:transparent;
+  border:0;
+  color:white;
+  font-size:28px;
+  cursor:pointer;
+}
+.modalbody {padding:21px}
+.modalgrid {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+.searchrow {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  margin:20px 0 10px;
+}
+.searchrow input {max-width:330px}
+.notice {
+  padding:11px 14px;
+  border-radius:8px;
+  background:#eaf3fc;
+  color:#234d73;
+  margin:12px 0;
+}
+.status {
+  position:fixed;
+  right:22px;
+  bottom:20px;
+  background:#173858;
+  color:white;
+  padding:13px 18px;
+  border-radius:10px;
+  box-shadow:0 10px 28px #1327393d;
+  display:none;
+  z-index:20;
+  max-width:450px;
+}
+.status.error {background:#a72727}
+
+@media(max-width:850px) {
+  .fields {grid-template-columns:repeat(2,1fr)}
+  .modalgrid {grid-template-columns:repeat(2,1fr)}
+  .summary {grid-template-columns:1fr 1fr}
+}
+@media(max-width:540px) {
+  .fields,.modalgrid,.summary {grid-template-columns:1fr}
+  .full {grid-column:span 1}
+  .top h1 {font-size:21px}
+  .panel-body {padding:14px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">
+    ISSA <b>●</b>
+    <small>CONSULTORES EN SEGUROS</small>
+  </div>
+  <div>CONTROL DE PROMOTORÍAS</div>
+</header>
+
+<main>
+
+<div class="top">
+  <div>
+    <h1>Reconocimiento por gastos de promotoría</h1>
+    <p>Registro, cálculo y emisión de comprobantes</p>
+  </div>
+  <div class="actions">
+    <button class="btn secondary"
+      onclick="showModal('comisiones')">
+      Comisiones
+    </button>
+    <button class="btn secondary"
+      onclick="showModal('agentes')">
+      Agentes
+    </button>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-title">
+    <h2>Información del reconocimiento</h2>
+    <div class="badge">No. <span id="id">1</span></div>
+  </div>
+
+  <div class="panel-body">
+    <form id="form" onsubmit="save(event)">
+      <div class="fields">
+
+        <div>
+          <label>Número correlativo</label>
+          <input id="numero" readonly>
+        </div>
+
+        <div>
+          <label>Fecha de ingreso</label>
+          <input id="fecha" type="date" readonly>
+        </div>
+
+        <div class="full">
+          <label>
+            Nombre asegurado <span class="req">*</span>
+          </label>
+          <input id="nombre" maxlength="160"
+            required placeholder="Nombre completo / razón social">
+        </div>
+
+        <div>
+          <label>
+            Fecha de vigencia <span class="req">*</span>
+          </label>
+          <input id="vigencia" type="date" required>
+        </div>
+
+        <div>
+          <label>Compañía <span class="req">*</span></label>
+          <select id="compania" required
+            onchange="updateProductos()">
+            <option value="">Seleccione compañía</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Producto <span class="req">*</span></label>
+          <select id="producto" required
+            onchange="updateTipos()">
+            <option value="">Seleccione producto</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Tipo <span class="req">*</span></label>
+          <select id="tipo" required
+            onchange="updatePorcentaje()">
+            <option value="">Seleccione tipo</option>
+          </select>
+        </div>
+
+        <div>
+          <label>No. de póliza <span class="req">*</span></label>
+          <input id="poliza" required maxlength="100"
+            placeholder="Número de póliza">
+        </div>
+
+        <div>
+          <label>
+            Prima neta anual (L) <span class="req">*</span>
+          </label>
+          <input id="prima" type="number"
+            min="0.01" step="0.01"
+            required oninput="calculate()">
+        </div>
+
+        <div>
+          <label>Porcentaje (%)</label>
+          <input id="porcentaje" readonly
+            placeholder="Automático">
+        </div>
+
+        <div>
+          <label>Total a pagar (L)</label>
+          <input id="total" readonly
+            placeholder="Automático">
+        </div>
+
+        <div>
+          <label>Agente <span class="req">*</span></label>
+          <select id="agente" required
+            onchange="updateAgente()">
+            <option value="">Seleccione agente</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Alianza</label>
+          <input id="alianza" readonly>
+        </div>
+
+        <div>
+          <label>Oficial</label>
+          <input id="oficial" readonly>
+        </div>
+
+        <div>
+          <label>Elaborado por <span class="req">*</span></label>
+          <input id="elaboradoPor" required maxlength="120"
+            placeholder="Persona que prepara">
+        </div>
+
+      </div>
+
+      <div class="footer-actions">
+        <button class="btn secondary" type="button"
+          onclick="resetForm()">
+          Nuevo reconocimiento
+        </button>
+        <button class="btn orange" type="submit" id="savebtn">
+          Guardar reconocimiento
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-title">
+    <h2>Vista previa del reconocimiento</h2>
+    <span class="mini">
+      El archivo Word se genera en formato carta horizontal
+    </span>
+  </div>
+
+  <div class="panel-body">
+    <div class="summary">
+
+      <div class="metric">
+        <span>Prima neta anual</span>
+        <strong id="mprima">L 0.00</strong>
+      </div>
+
+      <div class="metric">
+        <span>Porcentaje aplicado</span>
+        <strong id="mpct">0.00%</strong>
+      </div>
+
+      <div class="metric">
+        <span>Total reconocimiento</span>
+        <strong id="mtotal">L 0.00</strong>
+      </div>
+
+    </div>
+
+    <div class="tablewrap" style="margin-top:17px">
+      <table>
+        <thead>
+          <tr>
+            <th>Vigencia</th>
+            <th>Compañía</th>
+            <th>Producto</th>
+            <th>Tipo</th>
+            <th>No. póliza</th>
+            <th>Asegurado</th>
+            <th>Prima neta</th>
+            <th>%</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="preview"></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer-actions">
+      <span id="savedText" class="mini">
+        Guarde el registro para descargar el Word.
+      </span>
+
+      <button id="wordbtn" class="btn"
+        disabled onclick="downloadWord()">
+        Descargar Word horizontal
+      </button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- Ventana de catálogos -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modalhead">
+      <h2 id="modalTitle"></h2>
+      <button class="close" onclick="hideModal()"
+        aria-label="Cerrar">×</button>
+    </div>
+
+    <div class="modalbody">
+      <div class="notice" id="modalHint"></div>
+
+      <form id="catalogForm" onsubmit="saveCatalog(event)">
+        <input id="editingRow" type="hidden">
+
+        <div class="modalgrid" id="catalogFields"></div>
+
+        <div class="footer-actions">
+          <button class="btn secondary" type="button"
+            onclick="clearCatalogForm()">
+            Limpiar / Nuevo
+          </button>
+          <button class="btn orange"
+            id="catalogSave" type="submit">
+            Agregar al catálogo
+          </button>
+        </div>
+      </form>
+
+      <div class="searchrow">
+        <strong>Registros del catálogo</strong>
+        <input id="searchCatalog"
+          placeholder="Buscar..."
+          oninput="renderCatalog()">
+      </div>
+
+      <div class="tablewrap" id="catalogTable"></div>
+    </div>
+  </div>
+</div>
+
+<div class="status" id="status" role="status"></div>
+
+<script>
+'use strict';
+
+ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhqDJIVPomIHahEctcUAy_ReL-MvSWoSXHeYr8f60V-LxP756-KHp1oB46EyhrNisu/exec"; 
+
+let data = {
+  comisiones: [],
+  agentes: [],
+  siguiente: 1,
+  fecha: ''
+};
+
+let active = 'comisiones';
+let savedId = null;
+let busy = false;
+
+const $ = id => document.getElementById(id);
+const val = id => $(id).value;
+
+const escapeHtml = x => String(x ?? '').replace(
+  /[&<>"']/g,
+  ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[ch])
+);
+
+const fmt = n => new Intl.NumberFormat('es-HN', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+}).format(Number(n) || 0);
+
+const cash = n => 'L ' + fmt(n);
+const pct = n => (Number(n || 0) * 100).toFixed(2) + '%';
+
+function toast(s, error = false) {
+  const t = $('status');
+  t.textContent = s;
+  t.className = 'status' + (error ? ' error' : '');
+  t.style.display = 'block';
+
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(
+    () => t.style.display = 'none', 5200
+  );
+}
+
+// Comunicación con Apps Script.
+function api(name, ...args) {
+  return new Promise((resolve, reject) => {
+    if (!window.google?.script?.run) {
+      reject(new Error(
+        'Abra esta página desde la URL /exec de Apps Script.'
+      ));
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler(e =>
+        reject(new Error(e?.message || String(e)))
+      )[name](...args);
+  });
+}
+
+function uniq(arr) {
+  return [...new Set(arr.filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'es'));
+}
+
+function options(id, arr, placeholder) {
+  const current = val(id);
+
+  $(id).innerHTML =
+    '<option value="">' + escapeHtml(placeholder) + '</option>' +
+    arr.map(x =>
+      `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`
+    ).join('');
+
+  if (arr.includes(current)) {
+    $(id).value = current;
+  }
+}
+
+// Cargar información.
+async function load() {
+  try {
+    data = await api('getInitialData');
+
+    $('numero').value = data.siguiente;
+    $('id').textContent = data.siguiente;
+    $('fecha').value = data.fecha;
+
+    options(
+      'compania',
+      uniq(data.comisiones.map(x => x.compania)),
+      'Seleccione compañía'
+    );
+
+    options(
+      'agente',
+      uniq(data.agentes.map(x => x.agente)),
+      'Seleccione agente'
+    );
+
+    updateProductos();
+    updateAgente();
+    renderCatalog();
+
+  } catch (e) {
+    toast(e.message, true);
+  }
+}
+
+// Filtrar productos por compañía.
+function updateProductos() {
+  const items = data.comisiones.filter(
+    x => x.compania === val('compania')
+  );
+
+  options(
+    'producto',
+    uniq(items.map(x => x.producto)),
+    'Seleccione producto'
+  );
+
+  updateTipos();
+}
+
+// Filtrar tipos según compañía y producto.
+function updateTipos() {
+  const items = data.comisiones.filter(
+    x =>
+      x.compania === val('compania') &&
+      x.producto === val('producto')
+  );
+
+  options(
+    'tipo',
+    uniq(items.map(x => x.tipo)),
+    'Seleccione tipo'
+  );
+
+  updatePorcentaje();
+}
+
+function selectedCommission() {
+  return data.comisiones.find(
+    x =>
+      x.compania === val('compania') &&
+      x.producto === val('producto') &&
+      x.tipo === val('tipo')
+  );
+}
+
+function updatePorcentaje() {
+  const c = selectedCommission();
+
+  $('porcentaje').value = c ? pct(c.porcentaje) : '';
+
+  calculate();
+}
+
+function updateAgente() {
+  const a = data.agentes.find(
+    x => x.agente === val('agente')
+  );
+
+  $('alianza').value = a?.alianza || '';
+  $('oficial').value = a?.oficial || '';
+
+  renderPreview();
+}
+
+// Calcular reconocimiento.
+function calculate() {
+  const c = selectedCommission();
+  const p = Number(val('prima')) || 0;
+
+  const total = c
+    ? Math.round(p * c.porcentaje * 100) / 100
+    : 0;
+
+  $('total').value = c ? fmt(total) : '';
+
+  $('mprima').textContent = cash(p);
+  $('mpct').textContent = c ? pct(c.porcentaje) : '0.00%';
+  $('mtotal').textContent = cash(total);
+
+  renderPreview();
+}
+
+// Vista previa.
+function renderPreview() {
+  const c = selectedCommission();
+  const p = Number(val('prima')) || 0;
+
+  const cols = [
+    val('vigencia'),
+    val('compania'),
+    val('producto'),
+    val('tipo'),
+    val('poliza'),
+    val('nombre'),
+    cash(p),
+    c ? pct(c.porcentaje) : '',
+    c ? cash(p * c.porcentaje) : ''
+  ];
+
+  $('preview').innerHTML = cols.map(
+    x => '<td>' + escapeHtml(x || '—') + '</td>'
+  ).join('');
+}
+
+['vigencia', 'nombre', 'poliza', 'elaboradoPor']
+  .forEach(id => document.addEventListener('input', e => {
+    if (e.target.id === id) renderPreview();
+  }));
+
+function resetForm() {
+  savedId = null;
+
+  $('savebtn').disabled = false;
+  $('form').reset();
+
+  $('fecha').value = data.fecha;
+  $('numero').value = data.siguiente;
+  $('id').textContent = data.siguiente;
+
+  $('wordbtn').disabled = true;
+
+  $('savedText').textContent =
+    'Guarde el registro para descargar el Word.';
+
+  updateProductos();
+  updateAgente();
+  calculate();
+}
+
+function recordPayload() {
+  return {
+    nombre: val('nombre'),
+    vigencia: val('vigencia'),
+    compania: val('compania'),
+    producto: val('producto'),
+    tipo: val('tipo'),
+    poliza: val('poliza'),
+    prima: val('prima'),
+    agente: val('agente'),
+    elaboradoPor: val('elaboradoPor')
+  };
+}
+
+// Guardar en Base.
+async function save(e) {
+  e.preventDefault();
+
+  if (savedId !== null) {
+    toast('Este reconocimiento ya está guardado.');
+    return;
+  }
+
+  if (busy) return;
+
+  busy = true;
+  $('savebtn').disabled = true;
+
+  try {
+    const r = await api('saveRegistro', recordPayload());
+
+    savedId = r.id;
+
+    $('numero').value = r.id;
+    $('id').textContent = r.id;
+
+    $('savedText').textContent =
+      'Reconocimiento No. ' + r.id +
+      ' guardado en Base. Puede descargar el Word.';
+
+    $('wordbtn').disabled = false;
+
+    toast(
+      'Guardado correctamente: reconocimiento No. ' + r.id
+    );
+
+    data = await api('getInitialData');
+
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    busy = false;
+    $('savebtn').disabled = savedId !== null;
+  }
+}
+
+// Descargar archivo generado.
+function downloadBlob(b64, name, mime) {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  const url = URL.createObjectURL(
+    new Blob([bytes], {type: mime})
+  );
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+async function downloadWord() {
+  if (savedId === null) return;
+
+  const btn = $('wordbtn');
+
+  btn.disabled = true;
+  btn.textContent = 'Generando Word...';
+
+  try {
+    const f = await api('createWord', savedId);
+
+    downloadBlob(f.base64, f.fileName, f.mimeType);
+
+    toast('Word generado en formato carta horizontal.');
+
+  } catch (e) {
+    toast(e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Descargar Word horizontal';
+  }
+}
+
+// Definición de columnas en catálogos.
+const comFields = [
+  ['compania', 'Compañía'],
+  ['producto', 'Producto'],
+  ['tipo', 'Tipo'],
+  ['porcentaje', 'Porcentaje (%)']
+];
+
+const ageFields = [
+  ['agente', 'Agente'],
+  ['banco', 'Banco cta'],
+  ['cuenta', 'No. Cuenta'],
+  ['alianza', 'Alianza'],
+  ['oficial', 'Oficial'],
+  ['rtn', 'RTN'],
+  ['canal', 'Canal']
+];
+
+function fields() {
+  return active === 'comisiones' ? comFields : ageFields;
+}
+
+function showModal(which) {
+  active = which;
+
+  $('overlay').classList.add('show');
+
+  $('modalTitle').textContent =
+    which === 'comisiones'
+      ? 'Catálogo de comisiones'
+      : 'Catálogo de agentes';
+
+  $('modalHint').textContent =
+    which === 'comisiones'
+      ? 'El porcentaje depende de Compañía + Producto + Tipo. Ingrese 15 para 15%.'
+      : 'Al seleccionar un agente, se completa automáticamente Alianza y Oficial.';
+
+  clearCatalogForm();
+  renderCatalog();
+}
+
+function hideModal() {
+  $('overlay').classList.remove('show');
+}
+
+function clearCatalogForm() {
+  $('editingRow').value = '';
+
+  $('catalogFields').innerHTML = fields().map(
+    ([k, label]) => `
+      <div>
+        <label for="cat_${k}">${escapeHtml(label)}</label>
+        <input id="cat_${k}"
+          ${
+            k === 'porcentaje'
+              ? 'type="number" min="0" max="100" step="0.01"'
+              : 'type="text"'
+          }
+          autocomplete="off">
+      </div>
+    `
+  ).join('');
+
+  $('catalogSave').textContent = 'Agregar al catálogo';
+}
+
+function catalogData() {
+  return active === 'comisiones'
+    ? data.comisiones
+    : data.agentes;
+}
+
+// Tabla de búsqueda y edición.
+function renderCatalog() {
+  if (!$('catalogTable')) return;
+
+  const q = val('searchCatalog').toLowerCase();
+
+  const entries = catalogData().filter(
+    x => fields().some(
+      ([k]) =>
+        String(x[k] ?? '').toLowerCase().includes(q)
+    )
+  );
+
+  let html = '<table><thead><tr>';
+
+  html += fields().map(
+    ([, label]) => '<th>' + escapeHtml(label) + '</th>'
+  ).join('');
+
+  html += '<th>Acciones</th></tr></thead><tbody>';
+
+  html += entries.map(x =>
+    '<tr>' +
+    fields().map(
+      ([k]) =>
+        '<td>' +
+        escapeHtml(
+          k === 'porcentaje' ? pct(x[k]) : x[k]
+        ) +
+        '</td>'
+    ).join('') +
+    `<td>
+      <button class="btn small secondary"
+        onclick="editCatalog(${x.row})">Editar</button>
+      <button class="btn small danger"
+        onclick="removeCatalog(${x.row})">Eliminar</button>
+    </td></tr>`
+  ).join('');
+
+  html += '</tbody></table>';
+
+  $('catalogTable').innerHTML = entries.length
+    ? html
+    : '<p class="mini">No se encontraron registros.</p>';
+}
+
+function editCatalog(row) {
+  const x = catalogData().find(e => e.row === row);
+
+  if (!x) return;
+
+  $('editingRow').value = row;
+
+  fields().forEach(([k]) => {
+    $('cat_' + k).value =
+      k === 'porcentaje'
+        ? Number(x[k]) * 100
+        : x[k] ?? '';
+  });
+
+  $('catalogSave').textContent = 'Guardar cambios';
+
+  $('catalogFields').scrollIntoView({
+    behavior: 'smooth',
+    block: 'center'
+  });
+}
+
+async function saveCatalog(e) {
+  e.preventDefault();
+
+  const obj = {
+    row: Number(val('editingRow')) || 0
+  };
+
+  fields().forEach(
+    ([k]) => obj[k] = val('cat_' + k)
+  );
+
+  const b = $('catalogSave');
+  b.disabled = true;
+
+  try {
+    data = await api('addOrUpdateCatalogo', active, obj);
+
+    toast('Catálogo actualizado correctamente.');
+
+    clearCatalogForm();
+    refreshSelectors();
+    renderCatalog();
+
+  } catch (e) {
+    toast(e.message, true);
+  } finally {
+    b.disabled = false;
+  }
+}
+
+async function removeCatalog(row) {
+  if (!confirm(
+    '¿Eliminar este registro del catálogo? Los reconocimientos históricos no se modificarán.'
+  )) return;
+
+  try {
+    data = await api('deleteCatalogo', active, row);
+
+    toast('Registro eliminado del catálogo.');
+
+    clearCatalogForm();
+    refreshSelectors();
+    renderCatalog();
+
+  } catch (e) {
+    toast(e.message, true);
+  }
+}
+
+function refreshSelectors() {
+  const c = val('compania');
+  const a = val('agente');
+
+  options(
+    'compania',
+    uniq(data.comisiones.map(x => x.compania)),
+    'Seleccione compañía'
+  );
+
+  if (
+    uniq(data.comisiones.map(x => x.compania)).includes(c)
+  ) {
+    $('compania').value = c;
+  }
+
+  updateProductos();
+
+  options(
+    'agente',
+    uniq(data.agentes.map(x => x.agente)),
+    'Seleccione agente'
+  );
+
+  if (
+    uniq(data.agentes.map(x => x.agente)).includes(a)
+  ) {
+    $('agente').value = a;
+  }
+
+  updateAgente();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  renderPreview();
+  load();
+});
+</script>
+
+</body>
+</html>
+
