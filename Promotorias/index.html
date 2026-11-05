@@ -3,16 +3,7 @@
 <html lang="es">
 <head>
 
-<script>
-  // URL de Google Apps Script
-  const APPS_SCRIPT_URL =
-    "https://script.google.com/macros/s/AKfycbzhqDJIVPomIHahEctcUAy_ReL-MvSWoSXHeYr8f60V-LxP756-KHp1oB46EyhrNisu/exec";
-
-  // Abrir automáticamente la aplicación conectada
-  window.location.replace(APPS_SCRIPT_URL);
-</script>
-
-  
+ 
 <base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -575,10 +566,21 @@ td {font-size:12px}
 
 <div class="status" id="status" role="status"></div>
 
+
+<!-- Puente de comunicación con Apps Script -->
+<iframe
+  id="issaBridgeFrame"
+  title="Conexión con Apps Script"
+  style="position:absolute;width:1px;height:1px;opacity:0;border:0;pointer-events:none"
+  aria-hidden="true"
+  tabindex="-1">
+</iframe>
+  
+
 <script>
 'use strict';
 
- const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhqDJIVPomIHahEctcUAy_ReL-MvSWoSXHeYr8f60V-LxP756-KHp1oB46EyhrNisu/exec"; 
+ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbWHBYa51QGMAqoVYpdcLE_eVYgZOYkxnkxo3aJOJfMaNNK3v0jTjYUT8MqMDniF99/exec"; 
 
 let data = {
   comisiones: [],
@@ -625,24 +627,119 @@ function toast(s, error = false) {
   );
 }
 
-// Comunicación con Apps Script.
-function api(name, ...args) {
-  return new Promise((resolve, reject) => {
-    if (!window.google?.script?.run) {
-      reject(new Error(
-        'Abra esta página desde la URL /exec de Apps Script.'
-      ));
-      return;
-    }
 
-    google.script.run
-      .withSuccessHandler(resolve)
-      .withFailureHandler(e =>
-        reject(new Error(e?.message || String(e)))
-      )[name](...args);
+ // Puente GitHub Pages <-> Google Apps Script.
+let bridgeWindow = null;
+let bridgeOrigin = '';
+let bridgeResolve;
+
+const bridgeReady = new Promise(resolve => {
+  bridgeResolve = resolve;
+});
+
+const bridgePending = new Map();
+let bridgeCounter = 0;
+
+function validBridgeOrigin(origin) {
+  try {
+    const u = new URL(origin);
+
+    return u.protocol === 'https:' && (
+      u.hostname === 'script.google.com' ||
+      u.hostname === 'script.googleusercontent.com' ||
+      u.hostname.endsWith('.googleusercontent.com')
+    );
+  } catch (_) {
+    return false;
+  }
+}
+
+window.addEventListener('message', event => {
+  const m = event.data;
+
+  if (
+    !m ||
+    m.issaBridge !== true ||
+    !validBridgeOrigin(event.origin)
+  ) return;
+
+  if (m.type === 'ready') {
+    bridgeWindow = event.source;
+    bridgeOrigin = event.origin;
+    bridgeResolve();
+    return;
+  }
+
+  if (
+    m.type !== 'result' ||
+    event.source !== bridgeWindow
+  ) return;
+
+  const job = bridgePending.get(m.id);
+  if (!job) return;
+
+  bridgePending.delete(m.id);
+  clearTimeout(job.timer);
+
+  if (m.ok) {
+    job.resolve(m.data);
+  } else {
+    job.reject(
+      new Error(m.error || 'Error de Apps Script')
+    );
+  }
+});
+
+async function api(name, ...args) {
+  if (!bridgeWindow) {
+    await Promise.race([
+      bridgeReady,
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(
+          'No se pudo conectar con Apps Script. Revise la implementación, la sesión de Google y las cookies de terceros.'
+        )), 30000);
+      })
+    ]);
+  }
+
+  return new Promise((resolve, reject) => {
+    const id = ++bridgeCounter;
+
+    const timer = setTimeout(() => {
+      bridgePending.delete(id);
+      reject(new Error(
+        'Apps Script tardó demasiado en responder.'
+      ));
+    }, 120000);
+
+    bridgePending.set(id, {
+      resolve,
+      reject,
+      timer
+    });
+
+    bridgeWindow.postMessage({
+      issaBridge: true,
+      type: 'call',
+      id,
+      name,
+      args
+    }, bridgeOrigin);
   });
 }
 
+
+function autorizarGoogle() {
+  const url = APPS_SCRIPT_URL + '?mode=authorize';
+
+  window.open(
+    url,
+    '_blank',
+    'noopener,noreferrer'
+  );
+}
+
+  
 function uniq(arr) {
   return [...new Set(arr.filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, 'es'));
@@ -688,7 +785,20 @@ async function load() {
     renderCatalog();
 
   } catch (e) {
+    console.error('Error de conexión ISSA:', e);
+
     toast(e.message, true);
+
+    const aviso = document.getElementById('conexionGoogle');
+
+    if (aviso) {
+      aviso.style.borderColor = '#d9534f';
+
+      aviso.querySelector('p').textContent =
+        'No se pudo cargar el catálogo. ' +
+        'Presione "Comprobar acceso a Google" ' +
+        'para revisar la autorización.';
+    }
   }
 }
 
@@ -1143,6 +1253,10 @@ function refreshSelectors() {
 
 window.addEventListener('DOMContentLoaded', () => {
   renderPreview();
+
+  document.getElementById('issaBridgeFrame').src =
+    APPS_SCRIPT_URL + '?mode=bridge';
+
   load();
 });
 </script>
