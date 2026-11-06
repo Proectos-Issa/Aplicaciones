@@ -1752,6 +1752,18 @@ function imprimirReconocimiento() {
     (suma, f) => suma + Number(f.total || 0), 0
   );
 
+// Fecha de impresión según Honduras
+const fechaHoyImpresion = new Intl.DateTimeFormat(
+  'es-HN',
+  {
+    timeZone: 'America/Tegucigalpa',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }
+).format(new Date());
+
+ 
   // Crear ventana directamente al pulsar Imprimir.
   const ventana = window.open(
     '',
@@ -1809,10 +1821,83 @@ function imprimirReconocimiento() {
 <title>Reconocimiento ISSA No. ${escapar(val('numero'))}</title>
 
 <style>
-  @page {
-    size: letter landscape;
-    margin: 10mm;
-  }
+ 
+@page {
+  size: 11in 8.5in;
+  margin: 8mm;
+}
+
+html, body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  font-size: 9px;
+  color: #172c43;
+  background: white;
+}
+
+/* Tabla de pólizas dentro del ancho de carta */
+table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+th, td {
+  border: 1px solid #cbd6e1;
+  padding: 4px 3px;
+  font-size: 8px;
+  line-height: 1.25;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+th {
+  background: #eaf1f8;
+  color: #12385d;
+  text-align: center;
+  font-weight: bold;
+}
+
+td.derecha {
+  text-align: right;
+  white-space: nowrap;
+  font-size: 7.5px;
+}
+
+td.centro {
+  text-align: center;
+}
+
+
+/* CIUDAD Y FECHA - DOS ESPACIOS DEBAJO DE FIRMAS */
+
+.lugar-fecha {
+  margin-top: 10mm;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  color: #172c43;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+thead {
+  display: table-header-group;
+}
+
+tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
 
   * {
     box-sizing: border-box;
@@ -1903,14 +1988,52 @@ function imprimirReconocimiento() {
     font-size: 10px;
   }
 
-  .datos-agente {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 7px;
-    border: 1px solid #dce3ec;
-    background: #f4f7fb;
-    padding: 10px;
-  }
+  
+/* DATOS DEL AGENTE Y PAGO: UNA SOLA FILA */
+
+.datos-agente {
+  display: grid;
+  grid-template-columns:
+    13% 7% 12% 12% 13%
+    12% 7% 13% 11%;
+  gap: 0;
+  width: 100%;
+  border: 1px solid #cbd6e1;
+  background: #f4f7fb;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.dato {
+  min-width: 0;
+  padding: 5px 3px;
+  border-right: 1px solid #dce3ec;
+  overflow-wrap: anywhere;
+}
+
+.dato:last-child {
+  border-right: none;
+}
+
+.dato span {
+  display: block;
+  font-size: 7px;
+  font-weight: bold;
+  text-align: center;
+  color: #12385d;
+  margin-bottom: 5px;
+}
+
+.dato strong {
+  display: block;
+  font-size: 7px;
+  font-weight: 500;
+  color: #172c43;
+  text-align: center;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
 
   .dato {
     min-width: 0;
@@ -1930,12 +2053,28 @@ function imprimirReconocimiento() {
     font-size: 9px;
   }
 
-  .pie {
-    margin-top: 22px;
-    display: flex;
-    justify-content: space-between;
-    gap: 25px;
-  }
+  
+/* FIRMAS - CINCO ESPACIOS DE SEPARACIÓN */
+
+.pie {
+  margin-top: 25mm;
+  display: flex;
+  justify-content: space-between;
+  gap: 18mm;
+  width: 100%;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.firma {
+  width: 31%;
+  border-top: 1px solid #8898a8;
+  padding-top: 6px;
+  text-align: center;
+  font-size: 9px;
+  font-weight: bold;
+  color: #12385d;
+}
 
   .firma {
     text-align: center;
@@ -2044,13 +2183,20 @@ function imprimirReconocimiento() {
     ${agenteHTML}
   </div>
 
-  <div class="pie">
-    <div class="firma">Elaborado por</div>
-    <div class="firma">Autorizado por</div>
-    <div class="firma">Recibido por</div>
-  </div>
+ 
+<div class="pie">
+  <div class="firma">Elaborado por</div>
+  <div class="firma">Autorizado por</div>
+  <div class="firma">Recibido por</div>
+</div>
+
+<div class="lugar-fecha">
+  <strong>San Pedro Sula,</strong>
+  <span>${escapar(fechaHoyImpresion)}</span>
+</div>
 
 </body>
+
 </html>
 `;
 
