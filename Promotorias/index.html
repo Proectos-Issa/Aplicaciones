@@ -260,6 +260,82 @@ input[readonly] {
   color:var(--navy);
   font-size:20px;
 }
+
+/* DATOS DEL AGENTE Y PAGO - HORIZONTAL */
+
+.agent-detail {
+  margin-top: 18px;
+  padding: 15px 16px;
+  background: #f4f7fb;
+  border: 1px solid #dce3ec;
+  border-radius: 10px;
+}
+
+.agent-detail h3 {
+  margin: 0 0 12px;
+  color: #12385d;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Todos los campos en una fila horizontal */
+.agent-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(125px, 1.6fr)
+    minmax(75px, 0.8fr)
+    minmax(115px, 1.25fr)
+    minmax(115px, 1.2fr)
+    minmax(120px, 1.4fr)
+    minmax(100px, 1.2fr)
+    minmax(75px, 0.8fr)
+    minmax(125px, 1.5fr)
+    minmax(105px, 1.2fr);
+  gap: 10px;
+  align-items: start;
+  overflow-x: auto;
+}
+
+.agent-grid > div {
+  min-width: 0;
+}
+
+.agent-grid label {
+  font-size: 10px;
+  color: #63758a;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.agent-grid output {
+  display: block;
+  font-size: 11px;
+  font-weight: 650;
+  color: #12385d;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+/* Adaptación a pantallas más pequeñas */
+@media (max-width: 1150px) {
+  .agent-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 750px) {
+  .agent-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .agent-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+ 
 .tablewrap {overflow:auto}
 table {
   width:100%;
