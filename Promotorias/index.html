@@ -88,7 +88,10 @@ main {
   color:white;
 }
 .btn:hover {filter:brightness(1.08)}
-.btn:disabled {opacity:.5;cursor:wait}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .btn.secondary {
   background:white;
   color:var(--navy);
@@ -874,16 +877,37 @@ td {font-size:12px}
       </div>
     </div>
 
-    <div class="footer-actions">
-      <span id="savedText" class="mini">
-        Agregue pólizas y guarde para descargar el Word.
-      </span>
+    
+<div class="footer-actions">
 
-      <button id="wordbtn" class="btn"
-              disabled onclick="downloadWord()">
-        Descargar Word horizontal
-      </button>
-    </div>
+  <span id="savedText" class="mini">
+    Agregue pólizas para imprimir o guarde
+    el reconocimiento para descargar Word.
+  </span>
+
+  <div class="action-left">
+
+    <button
+      type="button"
+      id="printbtn"
+      class="btn orange"
+      onclick="imprimirReconocimiento()">
+      Imprimir horizontal
+    </button>
+
+    <button
+      type="button"
+      id="wordbtn"
+      class="btn secondary"
+      disabled
+      onclick="downloadWord()">
+      Descargar Word horizontal
+    </button>
+
+  </div>
+
+</div>
+
 
   </div>
 </section>
@@ -1678,6 +1702,375 @@ async function save(e) {
     $('savebtn').disabled = savedId !== null;
     $('addbtn').disabled = savedId !== null;
   }
+}
+
+/* ==========================================
+   IMPRESIÓN HORIZONTAL - ISSA
+   SIN NECESIDAD DE APPS SCRIPT
+========================================== */
+
+function imprimirReconocimiento() {
+
+  const filas = [...details];
+  const borrador = savedId === null
+    ? detailFromFields(false)
+    : null;
+
+  if (borrador) {
+    filas.push(borrador);
+  }
+
+  if (!filas.length) {
+    toast(
+      'Agregue al menos una póliza para imprimir.',
+      true
+    );
+    return;
+  }
+
+  const escapar = valor =>
+    escapeHtml(String(valor ?? ''));
+
+  const dato = id =>
+    document.getElementById(id)?.textContent?.trim()
+    || '—';
+
+  const fecha = valor => {
+    const s = String(valor || '');
+    const p = s.split('-');
+
+    return p.length === 3
+      ? [p[2], p[1], p[0]].join('/')
+      : s;
+  };
+
+  const totalPrima = filas.reduce(
+    (suma, f) => suma + Number(f.prima || 0), 0
+  );
+
+  const totalPagar = filas.reduce(
+    (suma, f) => suma + Number(f.total || 0), 0
+  );
+
+  // Crear ventana directamente al pulsar Imprimir.
+  const ventana = window.open(
+    '',
+    '_blank',
+    'width=1200,height=850'
+  );
+
+  if (!ventana) {
+    toast(
+      'El navegador bloqueó la ventana de impresión. ' +
+      'Permita las ventanas emergentes para este sitio.',
+      true
+    );
+    return;
+  }
+
+  const filasHTML = filas.map(f => `
+    <tr>
+      <td class="centro">${escapar(fecha(f.vigencia))}</td>
+      <td>${escapar(f.compania)}</td>
+      <td>${escapar(f.producto)}</td>
+      <td class="centro">${escapar(f.tipo)}</td>
+      <td>${escapar(f.poliza)}</td>
+      <td>${escapar(f.nombre)}</td>
+      <td class="derecha">${escapar(cash(f.prima))}</td>
+      <td class="centro">${escapar(pct(f.porcentaje))}</td>
+      <td class="derecha">${escapar(cash(f.total))}</td>
+    </tr>
+  `).join('');
+
+  const datosAgente = [
+    ['Agente', dato('pvAgente')],
+    ['Banco', dato('pvBanco')],
+    ['No. cuenta', dato('pvCuenta')],
+    ['RTN', dato('pvRtn')],
+    ['Alianza', dato('pvAlianza')],
+    ['Oficial', dato('pvOficial')],
+    ['Canal', dato('pvCanal')],
+    ['Empresa', 'ISSA Consultores en Seguros'],
+    ['Elaborado por', val('elaboradoPor') || dato('pvElaborado')]
+  ];
+
+  const agenteHTML = datosAgente.map(([etiqueta, valor]) => `
+    <div class="dato">
+      <span>${escapar(etiqueta)}</span>
+      <strong>${escapar(valor)}</strong>
+    </div>
+  `).join('');
+
+  const documento = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reconocimiento ISSA No. ${escapar(val('numero'))}</title>
+
+<style>
+  @page {
+    size: letter landscape;
+    margin: 10mm;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    margin: 0;
+    color: #172c43;
+    background: white;
+  }
+
+  .cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #12385d;
+    padding-bottom: 9px;
+    margin-bottom: 12px;
+  }
+
+  .marca {
+    font-size: 22px;
+    font-weight: bold;
+    color: #12385d;
+  }
+
+  .marca small {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+
+  h1 {
+    font-size: 16px;
+    color: #12385d;
+    text-align: center;
+    margin: 12px 0;
+  }
+
+  h2 {
+    font-size: 12px;
+    color: #12385d;
+    margin: 14px 0 8px;
+  }
+
+  .informacion {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 10px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  th, td {
+    border: 1px solid #cbd6e1;
+    padding: 6px 5px;
+    font-size: 9px;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+  }
+
+  th {
+    background: #eaf1f8;
+    color: #12385d;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  .derecha {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .centro {
+    text-align: center;
+  }
+
+  .total {
+    font-weight: bold;
+    background: #eaf1f8;
+    font-size: 10px;
+  }
+
+  .datos-agente {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 7px;
+    border: 1px solid #dce3ec;
+    background: #f4f7fb;
+    padding: 10px;
+  }
+
+  .dato {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .dato span {
+    display: block;
+    color: #63758a;
+    font-size: 8px;
+    margin-bottom: 4px;
+  }
+
+  .dato strong {
+    display: block;
+    color: #12385d;
+    font-size: 9px;
+  }
+
+  .pie {
+    margin-top: 22px;
+    display: flex;
+    justify-content: space-between;
+    gap: 25px;
+  }
+
+  .firma {
+    text-align: center;
+    width: 30%;
+    border-top: 1px solid #8898a8;
+    padding-top: 6px;
+    font-size: 9px;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr, .datos-agente, .pie {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media print {
+    body {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+  <div class="cabecera">
+    <div class="marca">
+      ISSA
+      <small>CONSULTORES EN SEGUROS</small>
+    </div>
+    <div>
+      CONTROL DE PROMOTORÍAS
+    </div>
+  </div>
+
+  <h1>RECONOCIMIENTO POR GASTOS DE PROMOTORÍA</h1>
+
+  <div class="informacion">
+    <div>
+      <strong>No. correlativo:</strong>
+      ${escapar(val('numero'))}
+    </div>
+    <div>
+      <strong>Fecha de ingreso:</strong>
+      ${escapar(fecha(val('fecha')))}
+    </div>
+    <div>
+      <strong>Estado:</strong>
+      ${savedId === null ? 'BORRADOR SIN GUARDAR' : 'GUARDADO'}
+    </div>
+  </div>
+
+  <table>
+    <colgroup>
+      <col style="width:10%">
+      <col style="width:10%">
+      <col style="width:12%">
+      <col style="width:8%">
+      <col style="width:12%">
+      <col style="width:20%">
+      <col style="width:11%">
+      <col style="width:6%">
+      <col style="width:11%">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>Vigencia</th>
+        <th>Compañía</th>
+        <th>Producto</th>
+        <th>Tipo</th>
+        <th>No. póliza</th>
+        <th>Asegurado</th>
+        <th>Prima neta</th>
+        <th>%</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      ${filasHTML}
+    </tbody>
+
+    <tfoot>
+      <tr class="total">
+        <td colspan="6" class="derecha">
+          TOTAL
+        </td>
+        <td class="derecha">
+          ${escapar(cash(totalPrima))}
+        </td>
+        <td></td>
+        <td class="derecha">
+          ${escapar(cash(totalPagar))}
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <h2>DATOS DEL AGENTE Y PAGO</h2>
+
+  <div class="datos-agente">
+    ${agenteHTML}
+  </div>
+
+  <div class="pie">
+    <div class="firma">Elaborado por</div>
+    <div class="firma">Autorizado por</div>
+    <div class="firma">Recibido por</div>
+  </div>
+
+</body>
+</html>
+`;
+
+  ventana.document.open();
+  ventana.document.write(documento);
+  ventana.document.close();
+
+  // Esperar a que termine de dibujarse el documento.
+  ventana.addEventListener('load', () => {
+    ventana.focus();
+    ventana.print();
+  }, { once: true });
+
+  // Respaldo para documentos sin recursos externos.
+  setTimeout(() => {
+    if (!ventana.closed) {
+      ventana.focus();
+      ventana.print();
+    }
+  }, 500);
 }
 
  
