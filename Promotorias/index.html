@@ -444,7 +444,7 @@ td {font-size:12px}
   </div>
 
   <div class="panel-body">
-    <form id="form" onsubmit="save(event)">
+    <form id="form" onsubmit="save(event)" novalidate>
       <div class="fields">
 
         <div>
@@ -550,10 +550,22 @@ td {font-size:12px}
       </div>
 
       <div class="footer-actions">
-        <button class="btn secondary" type="button"
+       
+<div class="action-left">
+  <button class="btn secondary"
+          type="button"
           onclick="resetForm()">
-          Nuevo reconocimiento
-        </button>
+    Nuevo
+  </button>
+
+  <button class="btn"
+          type="button"
+          id="addbtn"
+          onclick="addDetail()">
+    Agregar
+  </button>
+</div>
+
         <button class="btn orange" type="submit" id="savebtn">
           Guardar reconocimiento
         </button>
@@ -562,32 +574,32 @@ td {font-size:12px}
   </div>
 </section>
 
+
 <section class="panel">
   <div class="panel-title">
     <h2>Vista previa del reconocimiento</h2>
     <span class="mini">
-      El archivo Word se genera en formato carta horizontal
+      Word en formato carta horizontal
     </span>
   </div>
 
   <div class="panel-body">
-    <div class="summary">
 
+    <div class="summary">
       <div class="metric">
-        <span>Prima neta anual</span>
+        <span>Prima neta anual (suma)</span>
         <strong id="mprima">L 0.00</strong>
       </div>
 
       <div class="metric">
-        <span>Porcentaje aplicado</span>
-        <strong id="mpct">0.00%</strong>
+        <span>Pólizas agregadas</span>
+        <strong id="mpct">0</strong>
       </div>
 
       <div class="metric">
         <span>Total reconocimiento</span>
         <strong id="mtotal">L 0.00</strong>
       </div>
-
     </div>
 
     <div class="tablewrap" style="margin-top:17px">
@@ -603,24 +615,78 @@ td {font-size:12px}
             <th>Prima neta</th>
             <th>%</th>
             <th>Total</th>
+            <th>Acción</th>
           </tr>
         </thead>
-        <tbody>
-          <tr id="preview"></tr>
-        </tbody>
+
+        <tbody id="previewRows"></tbody>
+
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="8" style="text-align:right">
+              TOTAL A PAGAR
+            </td>
+            <td id="grandTotal">L 0.00</td>
+            <td></td>
+          </tr>
+        </tfoot>
       </table>
+    </div>
+
+    <div class="agent-detail">
+      <h3>Datos del agente y pago</h3>
+
+      <div class="agent-grid">
+        <div>
+          <label>Agente</label>
+          <output id="pvAgente">—</output>
+        </div>
+        <div>
+          <label>Banco</label>
+          <output id="pvBanco">—</output>
+        </div>
+        <div>
+          <label>No. cuenta</label>
+          <output id="pvCuenta">—</output>
+        </div>
+        <div>
+          <label>RTN</label>
+          <output id="pvRtn">—</output>
+        </div>
+        <div>
+          <label>Alianza</label>
+          <output id="pvAlianza">—</output>
+        </div>
+        <div>
+          <label>Oficial</label>
+          <output id="pvOficial">—</output>
+        </div>
+        <div>
+          <label>Canal</label>
+          <output id="pvCanal">—</output>
+        </div>
+        <div>
+          <label>Empresa</label>
+          <output>ISSA Consultores en Seguros</output>
+        </div>
+        <div>
+          <label>Elaborado por</label>
+          <output id="pvElaborado">—</output>
+        </div>
+      </div>
     </div>
 
     <div class="footer-actions">
       <span id="savedText" class="mini">
-        Guarde el registro para descargar el Word.
+        Agregue pólizas y guarde para descargar el Word.
       </span>
 
       <button id="wordbtn" class="btn"
-        disabled onclick="downloadWord()">
+              disabled onclick="downloadWord()">
         Descargar Word horizontal
       </button>
     </div>
+
   </div>
 </section>
 
@@ -683,7 +749,7 @@ td {font-size:12px}
 <script>
 'use strict';
 
- const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfyqVO71FzZB1NyxIMSvbHN0-EpURpcjafjCevzHhOrJBDKKMPkrtk78IoZLpTqq9q/exec"; 
+ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1Hnp4GZ5qR-mAo2H4xHv4bbHqMMkTUAJgZyQX_MaJHwzByaupFWyXvKwLeh52jFBY/exec"; 
 
 let data = {
   comisiones: [],
@@ -694,8 +760,9 @@ let data = {
 
 let active = 'comisiones';
 let savedId = null;
+let details = [];
+let lockedAgent = '';
 let busy = false;
-
 const $ = id => document.getElementById(id);
 const val = id => $(id).value;
 
