@@ -735,6 +735,21 @@ td {font-size:12px}
 
 <div class="status" id="status" role="status"></div>
 
+<div
+  id="connectionInfo"
+  role="alert"
+  style="
+    display:none;
+    margin:12px auto;
+    max-width:1180px;
+    padding:13px;
+    border:1px solid #dba9a9;
+    background:#fff4f4;
+    color:#7c2424;
+    border-radius:8px;
+  ">
+</div>
+
 
 <!-- Puente de comunicación con Apps Script -->
 <iframe
@@ -749,7 +764,7 @@ td {font-size:12px}
 <script>
 'use strict';
 
- const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1Hnp4GZ5qR-mAo2H4xHv4bbHqMMkTUAJgZyQX_MaJHwzByaupFWyXvKwLeh52jFBY/exec"; 
+ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzj6Dcs27ED6C2wnzDsLk4aKuFieblA6-ZMxfHT99QcLeibJ2QI60TT7hnwI37QfdDh/exec"; 
 
 let data = {
   comisiones: [],
@@ -945,61 +960,79 @@ function options(id, arr, placeholder, disabled = false) {
     : 'Seleccione una opción';
 }
 
-// Cargar información.
+
+// Cargar todos los catálogos desde Google Sheets.
 async function load() {
+  const aviso = document.getElementById('connectionInfo');
+
   try {
-    data = await api('getInitialData');
-   if (
-  !data ||
-  !Array.isArray(data.comisiones) ||
-  !Array.isArray(data.agentes)
-) {
-  throw new Error(
-    'Apps Script no devolvió correctamente los catálogos.'
-  );
-}
+    const respuesta = await api('getInitialData');
+
+    if (
+      !respuesta ||
+      !Array.isArray(respuesta.comisiones) ||
+      !Array.isArray(respuesta.agentes)
+    ) {
+      throw new Error(
+        'Apps Script no devolvió los catálogos correctamente.'
+      );
+    }
+
+    data = respuesta;
 
     $('numero').value = data.siguiente;
     $('id').textContent = data.siguiente;
     $('fecha').value = data.fecha;
 
+    // Llenar compañías desde Catalogos A:D
     options(
       'compania',
       uniq(data.comisiones.map(x => x.compania)),
       'Seleccione compañía'
     );
 
- options(
-  'agente',
-  uniq(data.agentes.map(x => x.agente)),
-  'Seleccione agente'
-);
+    // Llenar agentes desde Catalogos E:K
+    options(
+      'agente',
+      uniq(data.agentes.map(x => x.agente)),
+      'Seleccione agente'
+    );
 
-$('agente').value = '';
+    $('compania').value = '';
+    $('agente').value = '';
 
     updateProductos();
     updateAgente();
     renderCatalog();
 
-  } catch (e) {
-    console.error('Error de conexión ISSA:', e);
+    if (aviso) {
+      if (!data.comisiones.length || !data.agentes.length) {
+        aviso.style.display = 'block';
+        aviso.textContent =
+          'Conexión establecida, pero faltan datos en el catálogo de ' +
+          (!data.comisiones.length
+            ? 'Comisiones.'
+            : 'Agentes.');
+      } else {
+        aviso.style.display = 'none';
+      }
+    }
 
-    toast(e.message, true);
-
-    const aviso = document.getElementById('conexionGoogle');
+  } catch (error) {
+    console.error('Error cargando catálogos:', error);
 
     if (aviso) {
-      aviso.style.borderColor = '#d9534f';
-
-      aviso.querySelector('p').textContent =
-        'No se pudo cargar el catálogo. ' +
-        'Presione "Comprobar acceso a Google" ' +
-        'para revisar la autorización.';
+      aviso.style.display = 'block';
+      aviso.textContent =
+        'No se pudieron cargar los catálogos: ' +
+        error.message;
     }
+
+    toast(error.message, true);
   }
 }
 
-
+ 
 // Mostrar productos según la compañía elegida.
 function updateProductos() {
   const compania = val('compania');
@@ -1518,6 +1551,7 @@ function fields() {
   return active === 'comisiones' ? comFields : ageFields;
 }
 
+
 function showModal(which) {
   active = which;
 
@@ -1530,11 +1564,37 @@ function showModal(which) {
 
   $('modalHint').textContent =
     which === 'comisiones'
-      ? 'El porcentaje depende de Compañía + Producto + Tipo. Ingrese 15 para 15%.'
-      : 'Al seleccionar un agente, se completa automáticamente Alianza y Oficial.';
+      ? 'Porcentaje según Compañía + Producto + Tipo.'
+      : 'Agentes, datos bancarios, alianzas y oficiales.';
 
   clearCatalogForm();
   renderCatalog();
+
+  // Actualizar catálogo al abrir la ventana.
+  api('getInitialData')
+    .then(respuesta => {
+      if (
+        !respuesta ||
+        !Array.isArray(respuesta.comisiones) ||
+        !Array.isArray(respuesta.agentes)
+      ) {
+        throw new Error('Respuesta inválida de Google Sheets.');
+      }
+
+      data = respuesta;
+
+      refreshSelectors();
+      renderCatalog();
+    })
+    .catch(error => {
+      console.error(error);
+
+      toast(
+        'No se pudo actualizar el catálogo: ' +
+        error.message,
+        true
+      );
+    });
 }
 
 function hideModal() {
@@ -1719,13 +1779,27 @@ function refreshSelectors() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  renderPreview();
+  const frame = document.getElementById('issaBridgeFrame');
 
-  document.getElementById('issaBridgeFrame').src =
-    APPS_SCRIPT_URL + '?mode=bridge';
+  // Iniciar conexión con Apps Script.
+  if (frame) {
+    frame.src = APPS_SCRIPT_URL + '?mode=bridge';
+  } else {
+    console.error('No existe issaBridgeFrame.');
+    toast('Falta el puente con Apps Script.', true);
+  }
 
+  // La vista previa no debe interrumpir la carga.
+  try {
+    renderPreview();
+  } catch (error) {
+    console.error('Error en vista previa:', error);
+  }
+
+  // Solicitar catálogos.
   load();
 });
+
 </script>
 
 </body>
