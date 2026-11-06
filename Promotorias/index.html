@@ -335,8 +335,130 @@ input[readonly] {
   }
 }
 
+/* VISTA PREVIA - ALINEACIÓN DE COLUMNAS */
+
+.preview-table thead th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.preview-table tbody td {
+  vertical-align: middle;
+}
+
+/* Prima neta: columna 7 */
+.preview-table tbody td:nth-child(7) {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Porcentaje: columna 8 */
+.preview-table tbody td:nth-child(8) {
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Total: columna 9 */
+.preview-table tbody td:nth-child(9),
+.preview-table tfoot td:nth-child(2) {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Total general */
+.preview-table #grandTotal {
+  text-align: right;
+  font-weight: 700;
+  color: #12385d;
+}
+
+/* AGENTES - COLUMNAS MÁS COMPACTAS */
+
+.agents-table {
+  min-width: 0;
+  width: 100%;
+}
+
+.agents-table th,
+.agents-table td {
+  padding: 5px 4px;
+  font-size: 10px;
+}
+
+.agents-table th:nth-child(1) { width: 17%; }
+.agents-table th:nth-child(2) { width: 9%; }
+.agents-table th:nth-child(3) { width: 13%; }
+.agents-table th:nth-child(4) { width: 15%; }
+.agents-table th:nth-child(5) { width: 13%; }
+.agents-table th:nth-child(6) { width: 13%; }
+.agents-table th:nth-child(7) { width: 8%; }
+.agents-table th:nth-child(8) { width: 112px; }
+
+/* Evitar saltos innecesarios en botones */
+.agents-table .actions-cell {
+  width: 112px;
+  min-width: 112px;
+}
+
  
 .tablewrap {overflow:auto}
+ 
+/* TABLAS DE CATÁLOGOS - ESTILO COMPACTO */
+
+.catalog-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.catalog-table th {
+  padding: 7px 6px;
+  font-size: 11px;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.catalog-table td {
+  padding: 4px 6px;
+  font-size: 11px;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+
+/* Botones Editar y Eliminar */
+.catalog-table .btn.small {
+  padding: 4px 7px;
+  min-height: 24px;
+  border-radius: 5px;
+  font-size: 10px;
+  line-height: 1.1;
+}
+
+/* Acciones siempre en una sola fila */
+.catalog-table .catalog-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+/* Ancho mínimo para las acciones */
+.catalog-table .actions-cell {
+  width: 112px;
+  min-width: 112px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Columnas más compactas */
+.catalog-table th,
+.catalog-table td {
+  overflow-wrap: anywhere;
+}
+
 table {
   width:100%;
   border-collapse:collapse;
@@ -679,7 +801,7 @@ td {font-size:12px}
     </div>
 
     <div class="tablewrap" style="margin-top:17px">
-      <table>
+  <table class="preview-table">
         <thead>
           <tr>
             <th>Vigencia</th>
@@ -1717,7 +1839,9 @@ function renderCatalog() {
     )
   );
 
-  let html = '<table><thead><tr>';
+  let html = '<table class="catalog-table ' +
+  (active === 'agentes' ? 'agents-table' : 'commissions-table') +
+  '"><thead><tr>';
 
   html += fields().map(
     ([, label]) => '<th>' + escapeHtml(label) + '</th>'
@@ -1735,12 +1859,24 @@ function renderCatalog() {
         ) +
         '</td>'
     ).join('') +
-    `<td>
-      <button class="btn small secondary"
-        onclick="editCatalog(${x.row})">Editar</button>
-      <button class="btn small danger"
-        onclick="removeCatalog(${x.row})">Eliminar</button>
-    </td></tr>`
+    
+`<td class="actions-cell">
+  <div class="catalog-actions">
+    <button
+      type="button"
+      class="btn small secondary"
+      onclick="editCatalog(${x.row})">
+      Editar
+    </button>
+    <button
+      type="button"
+      class="btn small danger"
+      onclick="removeCatalog(${x.row})">
+      Eliminar
+    </button>
+  </div>
+</td></tr>`
+
   ).join('');
 
   html += '</tbody></table>';
