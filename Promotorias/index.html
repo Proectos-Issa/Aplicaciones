@@ -141,77 +141,135 @@ main {
   font-weight:700;
 }
 
-/* Distribución principal: 3 filas de 5 campos */
-.fields {
-  display: grid;
-  grid-template-columns:
-    minmax(95px, 0.85fr)
-    minmax(125px, 1.05fr)
-    minmax(180px, 1.65fr)
-    minmax(145px, 1.15fr)
-    minmax(145px, 1.15fr);
-  gap: 13px 12px;
-  align-items: end;
+
+/* INFORMACION DEL RECONOCIMIENTO - DOS FILAS */
+
+/* Contenedor de las dos filas */
+.fields-layout {
+  width: 100%;
+  overflow-x: auto;
 }
 
-/* Evitar que un campo sobrepase su columna */
-.fields > div {
+/* Configuración común */
+.fields-row {
+  display: grid;
+  gap: 9px;
+  align-items: end;
+  width: 100%;
+  min-width: 1080px;
+}
+
+/* Primera fila: 8 campos */
+.fields-row-one {
+  grid-template-columns:
+    minmax(58px, 0.55fr)
+    minmax(120px, 1.1fr)
+    minmax(175px, 1.85fr)
+    minmax(120px, 1.1fr)
+    minmax(120px, 1.15fr)
+    minmax(115px, 1.15fr)
+    minmax(90px, 0.95fr)
+    minmax(120px, 1.2fr);
+  margin-bottom: 15px;
+}
+
+/* Segunda fila: 7 campos */
+.fields-row-two {
+  grid-template-columns:
+    minmax(120px, 1.15fr)
+    minmax(85px, 0.75fr)
+    minmax(120px, 1.15fr)
+    minmax(170px, 1.7fr)
+    minmax(135px, 1.3fr)
+    minmax(125px, 1.2fr)
+    minmax(145px, 1.35fr);
+}
+
+/* Evitar desbordamiento */
+.fields-row > div {
   min-width: 0;
 }
 
-/* Todos los campos ocupan una sola columna */
-.fields > .full {
+/* El campo asegurado ya no ocupa dos columnas */
+.fields-row > .full {
   grid-column: auto;
 }
 
-/* Ajustar el contenido al espacio disponible */
-.fields input,
-.fields select {
+/* Tamaño uniforme */
+.fields-row input,
+.fields-row select {
   width: 100%;
   min-width: 0;
-  min-height: 39px;
-  padding: 8px 10px;
-  font-size: 13px;
+  height: 38px;
+  min-height: 38px;
+  padding: 7px 8px;
+  font-size: 12px;
+  border-radius: 7px;
   text-overflow: ellipsis;
 }
 
-/* Etiquetas compactas */
-.fields label {
-  font-size: 11px;
+/* Etiquetas */
+.fields-row label {
+  font-size: 10.5px;
+  font-weight: 650;
   line-height: 1.25;
   margin-bottom: 5px;
+  white-space: nowrap;
 }
 
-/* Fechas y cantidades */
-.fields input[type="date"] {
-  padding-right: 5px;
+/* Fechas */
+.fields-row input[type="date"] {
+  padding-right: 3px;
+  font-size: 11px;
 }
 
-.fields input[type="number"] {
+/* Importes alineados a la derecha */
+#prima,
+#total {
   text-align: right;
 }
 
-/* Valores automáticos */
-.fields input[readonly] {
+/* Porcentaje centrado */
+#porcentaje {
+  text-align: center;
+}
+
+/* Datos calculados */
+.fields-row input[readonly] {
   background: #eef3f7;
+  color: #415871;
   font-weight: 600;
 }
 
-/* Asegurado: más espacio cuando sea necesario */
-#nombre {
-  width: 100%;
-}
-
-/* Selectores activos */
-.fields select:not(:disabled) {
+/* Selectores */
+.fields-row select:not(:disabled) {
   cursor: pointer;
 }
 
-/* Selectores que esperan una selección previa */
-.fields select:disabled {
+.fields-row select:disabled {
   background: #f1f4f8;
   color: #8090a1;
   cursor: not-allowed;
+}
+
+/* Pantallas pequeñas: dos columnas */
+@media (max-width: 750px) {
+  .fields-row {
+    min-width: 0;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .fields-row label {
+    white-space: normal;
+  }
+}
+
+/* Teléfonos */
+@media (max-width: 480px) {
+  .fields-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 label {
@@ -645,8 +703,13 @@ td {font-size:12px}
   </div>
 
   <div class="panel-body">
-    <form id="form" onsubmit="save(event)" novalidate>
-      <div class="fields">
+    
+<form id="form" onsubmit="save(event)" novalidate>
+
+  <div class="fields-layout">
+
+    <!-- PRIMERA FILA: 8 CAMPOS -->
+    <div class="fields-row fields-row-one">
 
         <div>
           <label>Número correlativo</label>
@@ -702,6 +765,13 @@ td {font-size:12px}
           <input id="poliza" required maxlength="100"
             placeholder="Número de póliza">
         </div>
+     
+    </div>
+    <!-- FIN PRIMERA FILA -->
+
+    <!-- SEGUNDA FILA: 7 CAMPOS -->
+    <div class="fields-row fields-row-two">
+
 
         <div>
           <label>
@@ -742,15 +812,23 @@ td {font-size:12px}
           <input id="oficial" readonly>
         </div>
 
-        <div>
-          <label>Elaborado por <span class="req">*</span></label>
-          <input id="elaboradoPor" required maxlength="120"
-            placeholder="Persona que prepara">
-        </div>
+       
+<div>
+  <label>Elaborado por <span class="req">*</span></label>
+  <input id="elaboradoPor"
+         required
+         maxlength="120"
+         placeholder="Persona que prepara">
+</div>
 
-      </div>
+    </div>
+    <!-- FIN SEGUNDA FILA -->
 
-      <div class="footer-actions">
+  </div>
+  <!-- FIN DISTRIBUCION DEL FORMULARIO -->
+
+<div class="footer-actions">
+
        
 <div class="action-left">
   <button class="btn secondary"
