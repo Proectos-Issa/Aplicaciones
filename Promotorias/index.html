@@ -949,6 +949,15 @@ function options(id, arr, placeholder, disabled = false) {
 async function load() {
   try {
     data = await api('getInitialData');
+   if (
+  !data ||
+  !Array.isArray(data.comisiones) ||
+  !Array.isArray(data.agentes)
+) {
+  throw new Error(
+    'Apps Script no devolvió correctamente los catálogos.'
+  );
+}
 
     $('numero').value = data.siguiente;
     $('id').textContent = data.siguiente;
@@ -1068,65 +1077,270 @@ function updateAgente() {
   renderPreview();
 }
 
-// Calcular reconocimiento.
+
+/* ===== RECONOCIMIENTOS CON MULTIPLES POLIZAS ===== */
+
+function detailFromFields(requireComplete = false) {
+  const c = selectedCommission();
+  const prima = Number(val('prima'));
+
+  const d = {
+    nombre: val('nombre').trim(),
+    vigencia: val('vigencia'),
+    compania: val('compania'),
+    producto: val('producto'),
+    tipo: val('tipo'),
+    poliza: val('poliza').trim(),
+    prima: prima
+  };
+
+  const complete = Boolean(
+    d.nombre &&
+    d.vigencia &&
+    d.compania &&
+    d.producto &&
+    d.tipo &&
+    d.poliza &&
+    Number.isFinite(prima) &&
+    prima > 0 &&
+    c
+  );
+
+  if (!complete) {
+    if (requireComplete) {
+      throw new Error(
+        'Complete todos los datos de la póliza antes de Agregar.'
+      );
+    }
+    return null;
+  }
+
+  d.porcentaje = c.porcentaje;
+  d.total = Math.round(
+    (prima * c.porcentaje + Number.EPSILON) * 100
+  ) / 100;
+
+  return d;
+}
+
+/* Calcular importe según el catálogo */
 function calculate() {
   const c = selectedCommission();
-  const p = Number(val('prima')) || 0;
+  const prima = Number(val('prima')) || 0;
 
-  const total = c
-    ? Math.round(p * c.porcentaje * 100) / 100
-    : 0;
-
-  $('total').value = c ? fmt(total) : '';
-
-  $('mprima').textContent = cash(p);
-  $('mpct').textContent = c ? pct(c.porcentaje) : '0.00%';
-  $('mtotal').textContent = cash(total);
+  $('total').value = c
+    ? fmt(prima * c.porcentaje)
+    : '';
 
   renderPreview();
 }
 
-// Vista previa.
-function renderPreview() {
-  const c = selectedCommission();
-  const p = Number(val('prima')) || 0;
+/* Completar información bancaria y del agente */
+function showAgentDetails() {
+  const a = data.agentes.find(
+    x => x.agente === val('agente')
+  ) || {};
 
-  const cols = [
-    val('vigencia'),
-    val('compania'),
-    val('producto'),
-    val('tipo'),
-    val('poliza'),
-    val('nombre'),
-    cash(p),
-    c ? pct(c.porcentaje) : '',
-    c ? cash(p * c.porcentaje) : ''
-  ];
+  const fields = {
+    pvAgente: a.agente,
+    pvBanco: a.banco,
+    pvCuenta: a.cuenta,
+    pvRtn: a.rtn,
+    pvAlianza: a.alianza,
+    pvOficial: a.oficial,
+    pvCanal: a.canal,
+    pvElaborado: val('elaboradoPor')
+  };
 
-  $('preview').innerHTML = cols.map(
-    x => '<td>' + escapeHtml(x || '—') + '</td>'
-  ).join('');
+  Object.entries(fields).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value || '—';
+  });
 }
 
-['vigencia', 'nombre', 'poliza', 'elaboradoPor']
-  .forEach(id => document.addEventListener('input', e => {
-    if (e.target.id === id) renderPreview();
+/* Vista previa con todas las pólizas */
+function renderPreview() {
+  const draft = detailFromFields(false);
+
+  const rows = details.map((x, index) => ({
+    ...x,
+    index,
+    staged: true
   }));
 
+  if (draft && savedId === null) {
+    rows.push({
+      ...draft,
+      staged: false
+    });
+  }
+
+  const cols = d => [
+    d.vigencia,
+    d.compania,
+    d.producto,
+    d.tipo,
+    d.poliza,
+    d.nombre,
+    cash(d.prima),
+    pct(d.porcentaje),
+    cash(d.total)
+  ];
+
+  $('previewRows').innerHTML = rows.length
+    ? rows.map(d =>
+        '<tr>' +
+        cols(d).map(v =>
+          '<td>' + escapeHtml(v) + '</td>'
+        ).join('') +
+        '<td>' +
+        (
+          d.staged && savedId === null
+            ? '<button type="button" class="btn small danger" onclick="removeDetail(' +
+              d.index + ')">Quitar</button>'
+            : d.staged
+              ? 'Guardado'
+              : 'Por agregar'
+        ) +
+        '</td></tr>'
+      ).join('')
+    : '<tr><td colspan="10">Aún no hay pólizas agregadas.</td></tr>';
+
+  const prima = rows.reduce(
+    (sum, r) => sum + Number(r.prima), 0
+  );
+
+  const total = rows.reduce(
+    (sum, r) => sum + Number(r.total), 0
+  );
+
+  $('mprima').textContent = cash(prima);
+  $('mpct').textContent = String(rows.length);
+  $('mtotal').textContent = cash(total);
+  $('grandTotal').textContent = cash(total);
+
+  showAgentDetails();
+}
+
+/* Limpiar solamente la póliza */
+function clearPolicyFields() {
+  [
+    'nombre',
+    'vigencia',
+    'compania',
+    'producto',
+    'tipo',
+    'poliza',
+    'prima',
+    'porcentaje',
+    'total'
+  ].forEach(id => {
+    $(id).value = '';
+  });
+
+  updateProductos();
+  calculate();
+  $('nombre').focus();
+}
+
+/* Botón Agregar */
+function addDetail() {
+  if (savedId !== null) {
+    return toast(
+      'El reconocimiento ya está guardado. Presione Nuevo.',
+      true
+    );
+  }
+
+  try {
+    if (!val('agente')) {
+      throw new Error('Seleccione primero un agente.');
+    }
+
+    if (!val('elaboradoPor').trim()) {
+      throw new Error('Complete Elaborado por.');
+    }
+
+    if (lockedAgent && lockedAgent !== val('agente')) {
+      throw new Error(
+        'Todas las pólizas deben corresponder al mismo agente.'
+      );
+    }
+
+    const d = detailFromFields(true);
+
+    if (details.some(x =>
+      x.poliza.toLowerCase() === d.poliza.toLowerCase() &&
+      x.compania.toLowerCase() === d.compania.toLowerCase()
+    )) {
+      throw new Error('Esta póliza ya fue agregada.');
+    }
+
+    details.push(d);
+    lockedAgent = val('agente');
+
+    $('agente').disabled = true;
+
+    clearPolicyFields();
+    renderPreview();
+
+    toast('Póliza agregada correctamente.');
+
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+
+/* Quitar una póliza antes de guardar */
+function removeDetail(index) {
+  if (savedId !== null) return;
+
+  details.splice(index, 1);
+
+  if (!details.length) {
+    lockedAgent = '';
+    $('agente').disabled = false;
+  }
+
+  renderPreview();
+}
+
+/* Actualizar vista previa mientras se escribe */
+['vigencia', 'nombre', 'poliza', 'elaboradoPor']
+  .forEach(id => {
+    document.addEventListener('input', event => {
+      if (event.target.id === id) {
+        renderPreview();
+      }
+    });
+  });
+
+/* Botón Nuevo */
 function resetForm() {
+  if (busy) return;
+
+  if (
+    details.length &&
+    savedId === null &&
+    !confirm('¿Descartar las pólizas agregadas?')
+  ) return;
+
+  details = [];
+  lockedAgent = '';
   savedId = null;
 
-  $('savebtn').disabled = false;
   $('form').reset();
+  $('agente').disabled = false;
+  $('savebtn').disabled = false;
+  $('addbtn').disabled = false;
 
   $('fecha').value = data.fecha;
   $('numero').value = data.siguiente;
   $('id').textContent = data.siguiente;
 
   $('wordbtn').disabled = true;
-
   $('savedText').textContent =
-    'Guarde el registro para descargar el Word.';
+    'Agregue pólizas y guarde para descargar Word.';
 
   $('compania').value = '';
   $('agente').value = '';
@@ -1136,52 +1350,94 @@ function resetForm() {
   calculate();
 }
 
+/* Preparar todas las pólizas para guardar */
 function recordPayload() {
+  const list = details.slice();
+  const draft = detailFromFields(false);
+
+  if (draft) list.push(draft);
+
+  if (!list.length) {
+    throw new Error('Agregue al menos una póliza.');
+  }
+
+  if (!val('agente')) {
+    throw new Error('Seleccione un agente.');
+  }
+
+  if (!val('elaboradoPor').trim()) {
+    throw new Error('Complete Elaborado por.');
+  }
+
+  if (lockedAgent && lockedAgent !== val('agente')) {
+    throw new Error(
+      'Las pólizas deben corresponder al mismo agente.'
+    );
+  }
+
+  if (
+    !draft &&
+    [
+      'nombre', 'vigencia', 'compania',
+      'producto', 'tipo', 'poliza', 'prima'
+    ].some(id => val(id))
+  ) {
+    throw new Error(
+      'Hay una póliza incompleta. Complétela antes de guardar.'
+    );
+  }
+
   return {
-    nombre: val('nombre'),
-    vigencia: val('vigencia'),
-    compania: val('compania'),
-    producto: val('producto'),
-    tipo: val('tipo'),
-    poliza: val('poliza'),
-    prima: val('prima'),
     agente: val('agente'),
-    elaboradoPor: val('elaboradoPor')
+    elaboradoPor: val('elaboradoPor').trim(),
+    items: list
   };
 }
 
-// Guardar en Base.
+/* Guardar todas las pólizas en Base */
 async function save(e) {
   e.preventDefault();
 
   if (savedId !== null) {
-    toast('Este reconocimiento ya está guardado.');
-    return;
+    return toast('Este reconocimiento ya está guardado.');
   }
 
   if (busy) return;
 
-  busy = true;
-  $('savebtn').disabled = true;
+  let payload;
 
   try {
-    const r = await api('saveRegistro', recordPayload());
+    payload = recordPayload();
+  } catch (err) {
+    return toast(err.message, true);
+  }
+
+  busy = true;
+  $('savebtn').disabled = true;
+  $('addbtn').disabled = true;
+
+  try {
+    const r = await api('saveRegistroLote', payload);
 
     savedId = r.id;
+    details = payload.items;
 
     $('numero').value = r.id;
     $('id').textContent = r.id;
 
     $('savedText').textContent =
       'Reconocimiento No. ' + r.id +
-      ' guardado en Base. Puede descargar el Word.';
+      ' guardado con ' + details.length + ' pólizas.';
 
     $('wordbtn').disabled = false;
+    $('agente').disabled = true;
 
-    toast(
-      'Guardado correctamente: reconocimiento No. ' + r.id
-    );
+    clearPolicyFields();
+    renderPreview();
 
+    toast('Reconocimiento guardado correctamente.');
+
+    // Recuperar el siguiente correlativo y catálogos.
     data = await api('getInitialData');
 
   } catch (err) {
@@ -1189,9 +1445,11 @@ async function save(e) {
   } finally {
     busy = false;
     $('savebtn').disabled = savedId !== null;
+    $('addbtn').disabled = savedId !== null;
   }
 }
 
+ 
 // Descargar archivo generado.
 function downloadBlob(b64, name, mime) {
   const binary = atob(b64);
