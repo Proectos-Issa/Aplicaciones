@@ -2058,19 +2058,25 @@ function imprimirReconocimiento() {
   ventana.document.write(documento);
   ventana.document.close();
 
-  // Esperar a que termine de dibujarse el documento.
-  ventana.addEventListener('load', () => {
-    ventana.focus();
-    ventana.print();
-  }, { once: true });
-
-  // Respaldo para documentos sin recursos externos.
+  
+  // Abrir el diálogo de impresión una sola vez.
+  // El documento está configurado para carta horizontal.
   setTimeout(() => {
-    if (!ventana.closed) {
+    if (ventana.closed) return;
+
+    try {
       ventana.focus();
       ventana.print();
+    } catch (error) {
+      console.error('Error al imprimir:', error);
+
+      toast(
+        'No se pudo abrir la impresión. Revise las ventanas emergentes.',
+        true
+      );
     }
-  }, 500);
+  }, 350);
+
 }
 
  
